@@ -1,11 +1,23 @@
 Package: allocateR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Computes the "Reasonable Allocation" of Gobal Warming To A Country or UNFCCC Negotatiating Group
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Joe Wheatley 2023
+Maintainer: The package maintainer <joe.wheatley@ucd.ie>
+Description: The current version of allocateR uses CEDS emissions dataset for more than 200 countries, 20 country groupings including shipping and aviation.
+    Country groupings are based (loosely) on a unique assignment to UNFCCC negotiating groups extend to include shipping and aviation and "other" as additaion groups. UNFCCC groups
+    include G77, EU27, Umbrella Group, BASIC, SIDS, Least Developed Countries etc. Where a country is a member of multiple groups, it is assigned to the smallest
+    group of which it is a member. GSAT contributions are computed using the Hector Simple Climate Model and brute-force evaluation Shapley allocation from cooperative game theory.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends: 
+    R (>= 2.10)
+RoxygenNote: 7.3.1
+Imports: 
+    data.table (>= 1.0.0),
+    dplyr (>= 1.0.0),
+    hector (>= 1.0.0),
+    magrittr (>= 1.0.0),
+    parallel (>= 1.0.0),
+    stringr
