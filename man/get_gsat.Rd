@@ -14,7 +14,7 @@ get_gsat(coalition_emissions, start_year = 1851, evaluation_year = 2022)
 \item{evaluation_year}{usually 2022}
 }
 \value{
-a value in degC
+a coalition evaluation_year warming (GSAT) in degC
 }
 \description{
 Returns the 1851-2022 warming contribution from a coalition

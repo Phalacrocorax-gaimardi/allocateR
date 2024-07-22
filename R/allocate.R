@@ -123,7 +123,7 @@ get_coalition_emissions <- function(emissions){
 #' @param start_year usually 1851
 #' @param evaluation_year usually 2022
 #'
-#' @return a value in degC
+#' @return a coalition evaluation_year warming (GSAT) in degC
 #' @export
 #'
 #' @examples
@@ -229,3 +229,51 @@ contrib_shap <- function(emissions, country, coalitions) {
 
   return(shap / factorial(N))
 }
+
+
+# Define the contrib_shap function
+#' contrib_shap_p
+#'
+#' evaluate the reasonable allocation GSAT of country or grouping given an emissions dataset and a list of all possible coalitions.
+#' contrib_shap_p is the parallel version of contrib_shap using mclapply
+#'
+#' @param emissions the emissions dataset for all countries or groupings
+#' @param country the country (iso3) or grouping code
+#' @param coalitions the list of all coalitions of length 2^N where N is the number of countries or groupings
+#'
+#' @return the reasonable gsat allocation for the country
+#' @export
+#'
+#' @examples
+contrib_shap_p <- function(emissions, country, coalitions) {
+  # Get the total number of coalitions
+  N <- length(coalitions[[length(coalitions)]])
+
+  # Separate coalitions with and without the country
+  coalitions_without <- coalitions[!sapply(coalitions, function(coal) country %in% coal)]
+  coalitions_with <- lapply(coalitions_without, function(coal) c(country, coal))
+  N_s <- sapply(coalitions_without, length)
+
+  # Define a helper function to compute gsat difference
+  compute_gsat_diff <- function(i) {
+    gsats1 <- emissions %>% dplyr::filter(country %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats2 <- emissions %>% dplyr::filter(country %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    return(gsats1 - gsats2)
+  }
+
+  # Use parallel processing to compute gsat differences
+
+  num_cores <- parallel::detectCores() - 1  # Use all available cores minus one
+  gsat_diffs <- parallel::mclapply(1:length(coalitions_without), compute_gsat_diff, mc.cores = num_cores)
+
+  # Compute the Shapley value
+  shap <- sapply(1:length(coalitions_without), function(i) {
+    factorial(N_s[i]) * factorial(N - N_s[i] - 1) * gsat_diffs[[i]]
+  }) %>% sum()
+
+  return(shap / factorial(N))
+}
+
+
+
+
