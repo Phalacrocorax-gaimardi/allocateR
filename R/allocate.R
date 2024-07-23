@@ -59,7 +59,7 @@ make_null_core <- function(natural_n2o=9.96,natural_ch4=337.7725){
 
    ssp126_ini <- system.file("input/hector_ssp126.ini", package = "hector")
    nullcore <- hector::newcore(ssp126_ini, name="Zeroed Anthrogenic and Volanic emissions")
-   years <- 1851:2022
+   years <- 1745:2022
    var_emissions <- hector::fxntable %>% dplyr::filter(stringr::str_detect(string,"emissions")) %>% dplyr::pull(string)
    var_emissions <- var_emissions[var_emissions != "N2O_natural_emissions"]
    no_emissions <- hector::fetchvars(nullcore,years,var_emissions)
