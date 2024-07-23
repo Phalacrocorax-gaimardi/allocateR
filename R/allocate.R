@@ -59,7 +59,7 @@ make_null_core <- function(natural_n2o=9.96,natural_ch4=337.7725){
 
    ssp126_ini <- system.file("input/hector_ssp126.ini", package = "hector")
    nullcore <- hector::newcore(ssp126_ini, name="Zeroed Anthrogenic and Volanic emissions")
-   years <- 1745:2022
+   years <- 1851:2022
    var_emissions <- hector::fxntable %>% dplyr::filter(stringr::str_detect(string,"emissions")) %>% dplyr::pull(string)
    var_emissions <- var_emissions[var_emissions != "N2O_natural_emissions"]
    no_emissions <- hector::fetchvars(nullcore,years,var_emissions)
@@ -177,6 +177,7 @@ get_gsat <- function(coalition_emissions, start_year=1851, evaluation_year=2022)
   #values <- coalition_emissions[.(forcer),]$value
   hector::setvar(core,years,forcer, coalition_emissions[.(forcer),]$value, unit="Tg N")
   #
+  hector::reset(core,1850)
   hector::run(core, runtodate = 2022)
   gsat <- hector::fetchvars(core,evaluation_year,hector::GLOBAL_TAS()) #%>% as.data.table()
   #hector::shutdown(core)
@@ -273,7 +274,4 @@ contrib_shap_p <- function(emissions, country, coalitions) {
 
   return(shap / factorial(N))
 }
-
-
-
 
