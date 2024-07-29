@@ -46,16 +46,24 @@ get_coalitions <- function(groups){
 
 #' make_null_core
 #'
-#' A hector model instance (core) with zeroed anthropogenic and volcanic sulfur emissions
+#' A hector model instance (core) with zero-ed anthropogenic and volcanic sulfur emissions. Natural methane and nitrous oxide emissions
+#' values (in units Tg CH4 and Tg N) are chosen to produce a 1750-2022 warming not more than one millionth degC.This allows "leave one in" contributions
+#' of small countries to be evaluated in Hector.
 #'
 #' @param natural_n2o Tuned natural N2O emissions
 #' @param natural_ch4 Tuned natural CH4 emissions
+#' @param alpha the aerosol scale factor (default 1 unitless)
+#' @param S Equilibrium climate sensitivity (default 3 degC)
+#' @param diff ocean heat diffusivity (default 2.38 cm^2/s)
+#' @param q10_rh Q10 respiration temperature dependence parameter (1.76 unitless)
+#' @param npp_flux0 pre-industrial NPP (default 56.2 Pg C y-1)
+#' @param beta carbon fertilisation (default 0.53 unitless)
 #'
 #' @return a hector core
 #' @export
 #'
 #' @examples
-make_null_core <- function(natural_n2o=9.96,natural_ch4=337.7725){
+make_null_core <- function(natural_n2o=9.96,natural_ch4=337.7725,alpha=1,S=3,diff=2.38,q10_rh=1.76,npp_flux0=56.2,beta=0.53){
 
    ssp126_ini <- system.file("input/hector_ssp126.ini", package = "hector")
    nullcore <- hector::newcore(ssp126_ini, name="Zeroed Anthrogenic and Volanic emissions")
@@ -273,5 +281,40 @@ contrib_shap_p <- function(emissions, country, coalitions) {
   }) %>% sum()
 
   return(shap / factorial(N))
+}
+
+
+#' regroup_emissions
+#'
+#' regroup_emissions regroups a country-level emissions dataset, allowing the impact of selected individual countries to be found. Groups in drop_groupings are moved into the "other" grouping category.
+#' A list of countries add_countries are separated into their own groups with grouping label equal to the country code. The returned dataframe
+#' has emissions aggregated by the new grouping labels and can be used directly with contrib_shap.
+#'
+#' @param emissions country-level emissions dataset with original grouping labels (based on e.g. unfccc_groupings_cohesion)
+#' @param add_countries Countries to separate out that their gsat contribution can be calculated individually
+#' @param drop_groupings Groups to assign to the "other" category
+#'
+#' @return a regrouped emissions dataset with grouping code and no country codes
+#' @export
+#'
+#' @examples
+regroup_emissions <- function(emissions, add_countries,drop_groupings = c("cvf","mp","g77","eig","cacam","sids","ailac","alba","rn")){
+
+  emissions_f <- emissions %>% dplyr::mutate(grouping=ifelse(grouping %in% drop_groupings,"other",grouping))
+
+  filter_groups <- emissions_f %>% dplyr::filter(country %in% add_countries) %>% dplyr::pull(grouping) %>% unique()
+  #remove filter groups
+  emissions_f <- emissions %>% dplyr::filter(!(grouping %in% filter_groups)) %>% dplyr::group_by(year,variable,grouping) %>% dplyr::summarise(variable=variable[1],value=sum(value),units=units[1])
+  #restore filter_groups excluding add_countries
+  for(i in seq_along(add_countries)){
+    #
+    emit <- get_coalition_emissions(emissions %>% dplyr::filter(grouping == filter_groups[i], country != add_countries[i]))
+    emit$grouping <- filter_groups[i]
+    emissions_f <- emissions_f %>% dplyr::bind_rows(emit)
+  }
+  #restore add_countries
+  for(i in seq_along(add_countries))
+    emissions_f <- emissions_f %>% dplyr::bind_rows(emissions %>% dplyr::filter(country == add_countries[i]) %>% dplyr::select(-grouping) %>% dplyr::rename("grouping"=country))
+  emissions_f %>% return()
 }
 

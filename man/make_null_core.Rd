@@ -4,16 +4,39 @@
 \alias{make_null_core}
 \title{make_null_core}
 \usage{
-make_null_core(natural_n2o = 9.96, natural_ch4 = 337.7725)
+make_null_core(
+  natural_n2o = 9.96,
+  natural_ch4 = 337.7725,
+  alpha = 1,
+  S = 3,
+  diff = 2.38,
+  q10_rh = 1.76,
+  npp_flux0 = 56.2,
+  beta = 0.53
+)
 }
 \arguments{
 \item{natural_n2o}{Tuned natural N2O emissions}
 
 \item{natural_ch4}{Tuned natural CH4 emissions}
+
+\item{alpha}{the aerosol scale factor (default 1 unitless)}
+
+\item{S}{Equilibrium climate sensitivity (default 3 degC)}
+
+\item{diff}{ocean heat diffusivity (default 2.38 cm^2/s)}
+
+\item{q10_rh}{Q10 respiration temperature dependence parameter (1.76 unitless)}
+
+\item{npp_flux0}{pre-industrial NPP (default 56.2 Pg C y-1)}
+
+\item{beta}{carbon fertilisation (default 0.53 unitless)}
 }
 \value{
 a hector core
 }
 \description{
-A hector model instance (core) with zeroed anthropogenic and volcanic sulfur emissions
+A hector model instance (core) with zero-ed anthropogenic and volcanic sulfur emissions. Natural methane and nitrous oxide emissions
+values (in units Tg CH4 and Tg N) are chosen to produce a 1750-2022 warming not more than one millionth degC.This allows "leave one in" contributions
+of small countries to be evaluated in Hector.
 }

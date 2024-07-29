@@ -1,16 +1,12 @@
-#' UNFCCC Negotiating Group Membership
+#' UNFCCC Negotiating Group Names
 #'
-#' The assignment of unfccc parties to negotiating groups used by allocateR
+#' The names and corresponding code
 #'
 #' @format ## unfccc_groupings
-#' A data frame with 221 rows and 6 columns:
+#' A data frame with 20 rows and 2 columns:
 #' \describe{
-#'   \item{country.name.en}{Country name}
-#'   \item{country}{3 letter ISO country codes}
-#'   \item{current}{2022 CO2 emissions in PgC/year}
-#'   \item{current}{1851-2022 cumulative CO2 emissions in PgC}
 #'   \item{grouping}{grouping code}
-#'   \item{group_current}{2022 PgC emissions from negotiating group member countries}
-#' }
+#'   \item{name}{Name of negotiating group}
+#'   #' }
 #' @source <https://unfccc.int/process-and-meetings/parties-non-party-stakeholders/parties/party-groupings>
-"unfccc_groupings"
+"unfccc_groups"
