@@ -20,4 +20,5 @@ Imports:
     hector (>= 1.0.0),
     magrittr (>= 1.0.0),
     parallel (>= 1.0.0),
-    stringr
+    stringr,
+    tibble

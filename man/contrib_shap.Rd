@@ -4,14 +4,12 @@
 \alias{contrib_shap}
 \title{contrib_shap}
 \usage{
-contrib_shap(emissions, country, coalitions)
+contrib_shap(emissions, group)
 }
 \arguments{
 \item{emissions}{the emissions dataset for all countries or groupings}
 
-\item{country}{the country (iso3) or grouping code}
-
-\item{coalitions}{the list of all coalitions of length 2^N where N is the number of countries or groupings}
+\item{group}{a country (iso3) or grouping code}
 }
 \value{
 the reasonable gsat allocation for the country

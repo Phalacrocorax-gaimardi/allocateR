@@ -4,17 +4,15 @@
 \alias{contrib_shap_p}
 \title{contrib_shap_p}
 \usage{
-contrib_shap_p(emissions, country, coalitions)
+contrib_shap_p(emissions, group)
 }
 \arguments{
-\item{emissions}{the emissions dataset for all countries or groupings}
+\item{emissions}{a grouped emissions dataset such as that produced by allocateR::regroup_emissions()}
 
-\item{country}{the country (iso3) or grouping code}
-
-\item{coalitions}{the list of all coalitions of length 2^N where N is the number of countries or groupings}
+\item{group}{a country (iso3) or unfccc group code}
 }
 \value{
-the reasonable gsat allocation for the country
+a reasonable gsat allocation value.
 }
 \description{
 evaluate the reasonable allocation GSAT of country or grouping given an emissions dataset and a list of all possible coalitions.

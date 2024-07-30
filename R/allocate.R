@@ -119,7 +119,7 @@ get_coalition_emissions <- function(emissions){
   #take a subset
   #emissions %>% group_by(year,variable) %>% summarise(value=sum(value),units=units[1]) # %>% arrange(year,variable)
   emissions_DT <- data.table::setDT(emissions)
-  emissions_DT[,.(value=sum(value)), by=.(year,variable)]
+  emissions_DT[,.(value=sum(value)), by=.(year,variable,units)]
 }
 
 #' get_gsat
@@ -201,26 +201,29 @@ get_gsat <- function(coalition_emissions, start_year=1851, evaluation_year=2022)
 #' evaluate the reasonable allocation GSAT of country or grouping given an emissions dataset and a list of all possible coalitions
 #'
 #' @param emissions the emissions dataset for all countries or groupings
-#' @param country the country (iso3) or grouping code
-#' @param coalitions the list of all coalitions of length 2^N where N is the number of countries or groupings
+#' @param group a country (iso3) or grouping code
 #'
 #' @return the reasonable gsat allocation for the country
 #' @export
 #'
 #' @examples
-contrib_shap <- function(emissions, country, coalitions) {
+contrib_shap <- function(emissions, group){
   # Get the total number of coalitions
+  groups <- emissions %>% dplyr::pull(grouping) %>% unique()
+  if(!(group %in% groups)) stop("country or grouping not present in emissions grouping")
+  coalitions <- get_coalitions(groups)
+
   N <- length(coalitions[[length(coalitions)]])
 
   # Separate coalitions with and without the country
-  coalitions_without <- coalitions[!sapply(coalitions, function(coal) country %in% coal)]
-  coalitions_with <- lapply(coalitions_without, function(coal) c(country, coal))
+  coalitions_without <- coalitions[!sapply(coalitions, function(coal) group %in% coal)]
+  coalitions_with <- lapply(coalitions_without, function(coal) c(group, coal))
   N_s <- sapply(coalitions_without, length)
 
   # Define a helper function to compute gsat difference
   compute_gsat_diff <- function(i) {
-    gsats1 <- emissions %>% dplyr::filter(country %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
-    gsats2 <- emissions %>% dplyr::filter(country %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats1 <- emissions %>% dplyr::filter(grouping %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats2 <- emissions %>% dplyr::filter(grouping %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
     return(gsats1 - gsats2)
   }
 
@@ -246,27 +249,30 @@ contrib_shap <- function(emissions, country, coalitions) {
 #' evaluate the reasonable allocation GSAT of country or grouping given an emissions dataset and a list of all possible coalitions.
 #' contrib_shap_p is the parallel version of contrib_shap using mclapply
 #'
-#' @param emissions the emissions dataset for all countries or groupings
-#' @param country the country (iso3) or grouping code
-#' @param coalitions the list of all coalitions of length 2^N where N is the number of countries or groupings
+#' @param emissions a grouped emissions dataset such as that produced by allocateR::regroup_emissions()
+#' @param group a country (iso3) or unfccc group code
 #'
-#' @return the reasonable gsat allocation for the country
+#' @return a reasonable gsat allocation value.
 #' @export
 #'
 #' @examples
-contrib_shap_p <- function(emissions, country, coalitions) {
+contrib_shap_p <- function(emissions, group) {
   # Get the total number of coalitions
+  groups <- emissions %>% dplyr::pull(grouping) %>% unique()
+  if(!(group %in% groups)) stop("country or grouping not present in emissions grouping ")
+  coalitions <- get_coalitions(groups)
+
   N <- length(coalitions[[length(coalitions)]])
 
   # Separate coalitions with and without the country
-  coalitions_without <- coalitions[!sapply(coalitions, function(coal) country %in% coal)]
-  coalitions_with <- lapply(coalitions_without, function(coal) c(country, coal))
+  coalitions_without <- coalitions[!sapply(coalitions, function(coal) group %in% coal)]
+  coalitions_with <- lapply(coalitions_without, function(coal) c(group, coal))
   N_s <- sapply(coalitions_without, length)
 
   # Define a helper function to compute gsat difference
   compute_gsat_diff <- function(i) {
-    gsats1 <- emissions %>% dplyr::filter(country %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
-    gsats2 <- emissions %>% dplyr::filter(country %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats1 <- emissions %>% dplyr::filter(group %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats2 <- emissions %>% dplyr::filter(group %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
     return(gsats1 - gsats2)
   }
 
@@ -286,35 +292,73 @@ contrib_shap_p <- function(emissions, country, coalitions) {
 
 #' regroup_emissions
 #'
-#' regroup_emissions regroups a country-level emissions dataset, allowing the impact of selected individual countries to be found. Groups in drop_groupings are moved into the "other" grouping category.
-#' A list of countries add_countries are separated into their own groups with grouping label equal to the country code. The returned dataframe
-#' has emissions aggregated by the new grouping labels and can be used directly with contrib_shap.
+#' regroup_emissions regroups a country-level emissions dataset, allowing the warming impact of selected individual countries to be found. Groups in groupings_drop are moved into the "other" grouping category.
+#' Countries in a vector of iso codes countries_add appear with group label equal to the country code. The returned dataframe
+#' has emissions aggregated by the new grouping labels and can be used with using allocateR::contrib_shap.
 #'
 #' @param emissions country-level emissions dataset with original grouping labels (based on e.g. unfccc_groupings_cohesion)
-#' @param add_countries Countries to separate out that their gsat contribution can be calculated individually
-#' @param drop_groupings Groups to assign to the "other" category
+#' @param countries_add A vector of countries to add so that their gsat contribution can be calculated.
+#' @param groupings_sub A vector of groups to subtract i.e. to assign to the "other" category
 #'
 #' @return a regrouped emissions dataset with grouping code and no country codes
 #' @export
 #'
 #' @examples
-regroup_emissions <- function(emissions, add_countries,drop_groupings = c("cvf","mp","g77","eig","cacam","sids","ailac","alba","rn")){
+regroup_emissions <- function(emissions, countries_add=c("nzl","irl","ury"),groupings_sub = c("cvf","mp","g77","eig","cacam","sids","ailac","alba","rn")){
 
-  emissions_f <- emissions %>% dplyr::mutate(grouping=ifelse(grouping %in% drop_groupings,"other",grouping))
+  emissions_f <- emissions %>% dplyr::mutate(grouping=ifelse(grouping %in% groupings_sub,"other",grouping))
 
-  filter_groups <- emissions_f %>% dplyr::filter(country %in% add_countries) %>% dplyr::pull(grouping) %>% unique()
+  filter_groups <- emissions_f %>% dplyr::filter(country %in% countries_add) %>% dplyr::pull(grouping) %>% unique()
   #remove filter groups
-  emissions_f <- emissions %>% dplyr::filter(!(grouping %in% filter_groups)) %>% dplyr::group_by(year,variable,grouping) %>% dplyr::summarise(variable=variable[1],value=sum(value),units=units[1])
+  emissions_f <- emissions_f %>% dplyr::filter(!(grouping %in% filter_groups)) %>% dplyr::group_by(year,variable,grouping) %>% dplyr::summarise(variable=variable[1],value=sum(value),units=units[1])
   #restore filter_groups excluding add_countries
-  for(i in seq_along(add_countries)){
+  for(i in seq_along(countries_add)){
     #
-    emit <- get_coalition_emissions(emissions %>% dplyr::filter(grouping == filter_groups[i], country != add_countries[i]))
+    emit <- get_coalition_emissions(emissions %>% dplyr::filter(grouping == filter_groups[i], country != countries_add[i]))
     emit$grouping <- filter_groups[i]
     emissions_f <- emissions_f %>% dplyr::bind_rows(emit)
   }
   #restore add_countries
-  for(i in seq_along(add_countries))
-    emissions_f <- emissions_f %>% dplyr::bind_rows(emissions %>% dplyr::filter(country == add_countries[i]) %>% dplyr::select(-grouping) %>% dplyr::rename("grouping"=country))
-  emissions_f %>% return()
+  for(i in seq_along(countries_add))
+    emissions_f <- emissions_f %>% dplyr::bind_rows(emissions %>% dplyr::filter(country == countries_add[i]) %>% dplyr::select(-grouping) %>% dplyr::rename("grouping"=country))
+  print(paste("Number of groups=", dplyr::n_distinct(emissions_f$grouping)))
+  emissions_f %>% dplyr::select(year,variable,value,units,grouping) %>% return()
+}
+
+
+
+#' contrib_approx
+#'
+#' Approximation to country or group level contribution to global warming based on LOO and LOI values for the entity.
+#'
+#' Set type=country if working with a country-level emissions dataset. Set type=group if working with a grouped emissions
+#' dataset created by allocateR::regroup_emissions. This allows comparison with output produced by allocateR::contrib_shap which
+#' requires grouped data
+#'
+#' @param emissions country or group level emissions dataset
+#' @param type country or group
+#' @param entity iso3 country or unfccc group code
+#'
+#' @return a one-row data-frame giving gsat_loo, gsat_loi and gsat_approx
+#' @export
+#'
+#' @examples
+contrib_approx <- function(emissions, type="country",entity){
+  #get the contribution of country_a belonging to the group of country present in emissions
+  if(type=="country"){
+  if(!(entity %in% emissions$country %>% unique())) stop("country not in emissions")
+  emissions_a <- emissions %>% dplyr::filter(country==entity) %>% get_coalition_emissions()
+  emissions_b <- emissions %>% dplyr::filter(country!=entity) %>% get_coalition_emissions()
+  emissions_ab <- emissions %>% get_coalition_emissions()
+  }
+  if(type=="group"){
+    if(!(entity %in% emissions$grouping %>% unique())) stop("grouping not in emissions")
+    emissions_a <- emissions %>% dplyr::filter(grouping==entity) %>% get_coalition_emissions()
+    emissions_b <- emissions %>% dplyr::filter(grouping!=entity) %>% get_coalition_emissions()
+    emissions_ab <- emissions %>% get_coalition_emissions()
+  }
+  gsat_loi <- get_gsat(emissions_a)
+  gsat_loo <- get_gsat(emissions_ab)-get_gsat(emissions_b)
+  return(tibble::tibble(entity=entity,gsat_loo=gsat_loo,gsat_loi=gsat_loi, gsat_approx=(gsat_loo + gsat_loi)/2))
 }
 

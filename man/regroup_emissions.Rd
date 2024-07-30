@@ -6,22 +6,22 @@
 \usage{
 regroup_emissions(
   emissions,
-  add_countries,
-  drop_groupings = c("cvf", "mp", "g77", "eig", "cacam", "sids", "ailac", "alba", "rn")
+  countries_add = c("nzl", "irl", "ury"),
+  groupings_sub = c("cvf", "mp", "g77", "eig", "cacam", "sids", "ailac", "alba", "rn")
 )
 }
 \arguments{
 \item{emissions}{country-level emissions dataset with original grouping labels (based on e.g. unfccc_groupings_cohesion)}
 
-\item{add_countries}{Countries to separate out that their gsat contribution can be calculated individually}
+\item{countries_add}{A vector of countries to add so that their gsat contribution can be calculated.}
 
-\item{drop_groupings}{Groups to assign to the "other" category}
+\item{groupings_sub}{A vector of groups to subtract i.e. to assign to the "other" category}
 }
 \value{
 a regrouped emissions dataset with grouping code and no country codes
 }
 \description{
-regroup_emissions regroups a country-level emissions dataset, allowing the impact of selected individual countries to be found. Groups in drop_groupings are moved into the "other" grouping category.
-A list of countries add_countries are separated into their own groups with grouping label equal to the country code. The returned dataframe
-has emissions aggregated by the new grouping labels and can be used directly with contrib_shap.
+regroup_emissions regroups a country-level emissions dataset, allowing the warming impact of selected individual countries to be found. Groups in groupings_drop are moved into the "other" grouping category.
+Countries in a vector of iso codes countries_add appear with group label equal to the country code. The returned dataframe
+has emissions aggregated by the new grouping labels and can be used with using allocateR::contrib_shap.
 }
