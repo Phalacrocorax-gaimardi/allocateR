@@ -247,7 +247,7 @@ contrib_shap <- function(emissions, group){
 #' contrib_shap_p
 #'
 #' evaluate the reasonable allocation GSAT of country or grouping given an emissions dataset and a list of all possible coalitions.
-#' contrib_shap_p is the parallel version of contrib_shap using mclapply
+#' contrib_shap_p is the parallel version of contrib_shap using mclapply for use Linux systems. Does not work on Windows.
 #'
 #' @param emissions a grouped emissions dataset such as that produced by allocateR::regroup_emissions()
 #' @param group a country (iso3) or unfccc group code
@@ -259,7 +259,7 @@ contrib_shap <- function(emissions, group){
 contrib_shap_p <- function(emissions, group) {
   # Get the total number of coalitions
   groups <- emissions %>% dplyr::pull(grouping) %>% unique()
-  if(!(group %in% groups)) stop("country or grouping not present in emissions grouping ")
+  if(!(group %in% groups)) stop("country or grouping not present in emissions grouping")
   coalitions <- get_coalitions(groups)
 
   N <- length(coalitions[[length(coalitions)]])
@@ -271,8 +271,8 @@ contrib_shap_p <- function(emissions, group) {
 
   # Define a helper function to compute gsat difference
   compute_gsat_diff <- function(i) {
-    gsats1 <- emissions %>% dplyr::filter(group %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
-    gsats2 <- emissions %>% dplyr::filter(group %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats1 <- emissions %>% dplyr::filter(grouping %in% coalitions_with[[i]]) %>% get_coalition_emissions() %>% get_gsat()
+    gsats2 <- emissions %>% dplyr::filter(grouping %in% coalitions_without[[i]]) %>% get_coalition_emissions() %>% get_gsat()
     return(gsats1 - gsats2)
   }
 
@@ -280,6 +280,8 @@ contrib_shap_p <- function(emissions, group) {
 
   num_cores <- parallel::detectCores() - 1  # Use all available cores minus one
   gsat_diffs <- parallel::mclapply(1:length(coalitions_without), compute_gsat_diff, mc.cores = num_cores)
+  #gsat_diffs <- lapply(1:length(coalitions_without), compute_gsat_diff)
+
 
   # Compute the Shapley value
   shap <- sapply(1:length(coalitions_without), function(i) {

@@ -16,5 +16,5 @@ a reasonable gsat allocation value.
 }
 \description{
 evaluate the reasonable allocation GSAT of country or grouping given an emissions dataset and a list of all possible coalitions.
-contrib_shap_p is the parallel version of contrib_shap using mclapply
+contrib_shap_p is the parallel version of contrib_shap using mclapply for use Linux systems. Does not work on Windows.
 }
