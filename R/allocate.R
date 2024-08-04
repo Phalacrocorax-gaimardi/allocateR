@@ -82,6 +82,13 @@ make_null_core <- function(natural_n2o=9.96,natural_ch4=337.7725,alpha=1,S=3,dif
    hector::setvar(nullcore,years,hector::NAT_EMISSIONS_N2O(), rep(natural_n2o,length(years)), unit="Tg N")
    hector::setvar(nullcore,NA,hector::NATURAL_CH4(), natural_ch4, unit="Tg CH4")
    hector::setvar(nullcore,years,hector::RF_ALBEDO(), rep(0,length(years)), unit="W/m2")
+   #set paramaters
+   hector::setvar(nullcore,NA,"alpha",alpha,"(unitless)")
+   hector::setvar(nullcore,NA,"S",S,"degC")
+   hector::setvar(nullcore,NA,"diff",diff,"cm2/s")
+   hector::setvar(nullcore,NA,"q10_rh",q10_rh,"(unitless)")
+   hector::setvar(nullcore,NA,"beta",beta,"(unitless)")
+
 
 #vars0 <- no_impact$variable %>% unique()
 
@@ -363,4 +370,8 @@ contrib_approx <- function(emissions, type="country",entity){
   gsat_loo <- get_gsat(emissions_ab)-get_gsat(emissions_b)
   return(tibble::tibble(entity=entity,gsat_loo=gsat_loo,gsat_loi=gsat_loi, gsat_approx=(gsat_loo + gsat_loi)/2))
 }
+
+#sample usage
+
+
 
