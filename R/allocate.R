@@ -137,12 +137,13 @@ get_coalition_emissions <- function(emissions){
 #' @param coalition_emissions coalition emissions
 #' @param start_year usually 1851
 #' @param evaluation_year usually 2022
+#' @param baseline_1851_1900 not used at the moment (always TRUE)
 #'
 #' @return a coalition evaluation_year warming (GSAT) in degC
 #' @export
 #'
 #' @examples
-get_gsat <- function(coalition_emissions, start_year=1851, evaluation_year=2022){
+get_gsat <- function(coalition_emissions, start_year=1851, evaluation_year=2022, baseline_1851_1900 =TRUE){
   #step 1:first ensure that all emissions are set to zero
   #step 2:add emissions for ceds database
   #compute gsat from a ceds emissions
@@ -194,9 +195,10 @@ get_gsat <- function(coalition_emissions, start_year=1851, evaluation_year=2022)
   #
   hector::reset(core,1850)
   hector::run(core, runtodate = 2022)
-  gsat <- hector::fetchvars(core,evaluation_year,hector::GLOBAL_TAS()) #%>% as.data.table()
+  gsat <- hector::fetchvars(core,c(1851:1900,evaluation_year),hector::GLOBAL_TAS()) %>% dplyr::pull(value) #%>% as.data.table()
+  gsat <-gsat[51]-mean(gsat[1:50])
   #hector::shutdown(core)
-  gsat$value %>% return()
+  gsat %>% return()
 
 
 }

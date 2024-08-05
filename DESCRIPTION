@@ -1,7 +1,7 @@
 Package: allocateR
 Type: Package
 Title: Computes the "Reasonable Allocation" of Gobal Warming To A Country or UNFCCC Negotatiating Group
-Version: 0.1.5
+Version: 0.1.6
 Author: Joe Wheatley 2023
 Maintainer: The package maintainer <joe.wheatley@ucd.ie>
 Description: The current version of allocateR uses CEDS emissions dataset for more than 200 countries, 20 country groupings including shipping and aviation.

@@ -4,7 +4,12 @@
 \alias{get_gsat}
 \title{get_gsat}
 \usage{
-get_gsat(coalition_emissions, start_year = 1851, evaluation_year = 2022)
+get_gsat(
+  coalition_emissions,
+  start_year = 1851,
+  evaluation_year = 2022,
+  baseline_1851_1900 = TRUE
+)
 }
 \arguments{
 \item{coalition_emissions}{coalition emissions}
@@ -12,6 +17,8 @@ get_gsat(coalition_emissions, start_year = 1851, evaluation_year = 2022)
 \item{start_year}{usually 1851}
 
 \item{evaluation_year}{usually 2022}
+
+\item{baseline_1851_1900}{not used at the moment (always TRUE)}
 }
 \value{
 a coalition evaluation_year warming (GSAT) in degC
