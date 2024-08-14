@@ -376,4 +376,33 @@ contrib_approx <- function(emissions, type="country",entity){
 #sample usage
 
 
+#' rollup_emissions
+#'
+#' re-expresses CEDS country level emissions data as the emissions of countries in countrynames plus a remainder.
+#' option to group eu27 member states if desired.
+#'
+#' @param countrynames a vector of iso3 country codes (may include eu27 when group_eu is TRUE)
+#' @param group_eu If TRUE groups EU member states to "eu27"
+#'
+#' @return an emissions data-frame for countrynames and "rem"
+#' @export
+#'
+#' @examples
+rollup_emissions <- function(countrynames, group_eu=TRUE){
+  #
+  #group
+  if(group_eu){
+    emissions <- emissions_ceds %>% dplyr::inner_join(unfccc_groupings_cohesion %>% dplyr::select(country,grouping))
+    emissions_eu <-  emissions %>% dplyr::filter(grouping=="eu27") %>% dplyr::group_by(year,variable,units) %>% dplyr::summarise(country="eu27",value=sum(value))
+    emissions <- emissions %>% dplyr::filter(grouping!="eu27")
+    emissions <- emissions %>% dplyr::bind_rows(emissions_eu)
+  }
+  if(!group_eu) emissions <- emissions_ceds
+
+  emissions_t <- emissions %>% dplyr::filter(country %in% countrynames)
+  emissions_o <- emissions %>% dplyr::filter(!(country %in% countrynames))
+  emissions_o <- emissions_o  %>% dplyr::group_by(year,variable,units) %>% dplyr::summarise(country="rem", value = sum(value))
+  emissions_t %>% dplyr::bind_rows(emissions_o) %>% return()
+
+}
 
