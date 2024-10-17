@@ -25,3 +25,6 @@ regroup_emissions regroups a country-level emissions dataset, allowing the warmi
 Countries in a vector of iso codes countries_add appear with group label equal to the country code. The returned dataframe
 has emissions aggregated by the new grouping labels and can be used with using allocateR::contrib_shap.
 }
+\details{
+IMPORTANT LIMITATION. regroup_emissions is not intended to work when more than two or more of the selected countries belong to the same unfccc grouping.
+}

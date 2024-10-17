@@ -307,6 +307,8 @@ contrib_shap_p <- function(emissions, group) {
 #' Countries in a vector of iso codes countries_add appear with group label equal to the country code. The returned dataframe
 #' has emissions aggregated by the new grouping labels and can be used with using allocateR::contrib_shap.
 #'
+#' IMPORTANT LIMITATION. regroup_emissions is not intended to work when more than two or more of the selected countries belong to the same unfccc grouping.
+#'
 #' @param emissions country-level emissions dataset with original grouping labels (based on e.g. unfccc_groupings_cohesion)
 #' @param countries_add A vector of countries to add so that their gsat contribution can be calculated.
 #' @param groupings_sub A vector of groups to subtract i.e. to assign to the "other" category
@@ -319,8 +321,11 @@ regroup_emissions <- function(emissions, countries_add=c("nzl","irl","ury"),grou
 
   emissions_f <- emissions %>% dplyr::mutate(grouping=ifelse(grouping %in% groupings_sub,"other",grouping))
 
-  filter_groups <- emissions_f %>% dplyr::filter(country %in% countries_add) %>% dplyr::pull(grouping) %>% unique()
-  #remove filter groups
+  for(i in seq_along(countries_add)){
+    filter_groups[i] <- emissions_f %>% dplyr::filter(country ==
+                                                        countries_add[i]) %>% dplyr::pull(grouping) %>% unique()
+  }
+    #remove filter groups
   emissions_f <- emissions_f %>% dplyr::filter(!(grouping %in% filter_groups)) %>% dplyr::group_by(year,variable,grouping) %>% dplyr::summarise(variable=variable[1],value=sum(value),units=units[1])
   #restore filter_groups excluding add_countries
   for(i in seq_along(countries_add)){
