@@ -320,7 +320,7 @@ contrib_shap_p <- function(emissions, group) {
 regroup_emissions <- function(emissions, countries_add=c("nzl","irl","ury"),groupings_sub = c("cvf","mp","g77","eig","cacam","sids","ailac","alba","rn")){
 
   emissions_f <- emissions %>% dplyr::mutate(grouping=ifelse(grouping %in% groupings_sub,"other",grouping))
-
+  filter_groups <- c()
   for(i in seq_along(countries_add)){
     filter_groups[i] <- emissions_f %>% dplyr::filter(country ==
                                                         countries_add[i]) %>% dplyr::pull(grouping) %>% unique()
